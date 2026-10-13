@@ -36,7 +36,7 @@ jobs:
         shell: powershell
         run: |
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-          .\Reset-Proxy.ps1 -DryRun
+          .\src\Reset-Proxy.ps1 -DryRun
 
       - name: 冒烟测试 - 打包脚本
         shell: powershell

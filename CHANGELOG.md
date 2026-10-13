@@ -1,48 +1,26 @@
 # 更新日志
 
-本项目的所有重要变更都会记录在这里。
-
-格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
-版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号用语义化版本。
 
 ## [1.0.0] - 2026-10-13
 
-首个公开版本。
+第一个版本。
 
-### 新增
-
-- **`Reset-Proxy.ps1`**：核心脚本，一次完成「体检 + 修复」。
-  - 体检 9 项：当前用户系统代理、自动配置脚本(PAC)、自动检测设置、计算机级代理(组策略)、
-    WinHTTP 代理、网卡 DNS、默认路由/虚拟网卡、hosts 文件、当前权限。
-  - 修复：把「指向本机死端口」的系统代理恢复为直连，并同步修复「局域网(LAN)设置」对话框
-    背后的 `Connections\DefaultConnectionSettings` 二进制数据（逐字节保留其余内容，仅改标志位并递增计数器）。
-  - 修复后调用 WinINET `InternetSetOption` 通知系统立即生效，无需重启。
-  - **智能检测**：先对代理端口做 TCP 探活，端口有人在听（客户端正在运行）就完全不动作。
-  - 每次修改前自动备份原设置到 `logs/backup/`（保留最近 20 份）。
-  - 可选修复项（默认关闭）：`-IncludeWinHttp`、`-FixDns`、`-FixMetric`、`-FixHosts`、`-RepairAll`。
-- **`Watch-Proxy.ps1`**：可选常驻监视，每 N 分钟检查一次，客户端中途崩溃也能自动恢复。
-- **`Install-ProxyGuard.ps1`**：安装器。
-  - 部署脚本到 `%LOCALAPPDATA%\ProxyGuard`，强制写入 UTF-8 BOM 并**回读校验**。
-  - 优先注册计划任务（注册后回读确认，避免把失败误判成成功），失败自动回退到启动文件夹（免管理员权限）。
-  - 生成 `修复上网.cmd`、`一键体检.cmd`、`卸载.cmd`、`安装为计划任务(需管理员).cmd`。
-- **`安装.cmd` / `卸载.cmd` / `一键体检.cmd`**：双击即用的启动器，内容为纯 ASCII，
-  并在运行前自动把同目录的 `.ps1` 修复为 UTF-8 BOM（防止通过复制粘贴转存导致的编码损坏）。
-- **`tests/`**：自带测试，不依赖任何第三方模块（不需要 Pester）。
-  - `Test-Conventions.ps1`：编码与规范检查（`.ps1` 必须有 BOM、`.cmd` 必须纯 ASCII、语法能否解析）。
-  - `Test-ProxyGuard.ps1`：在**影子注册表项**上跑的完整行为矩阵，自带一个本地监听端口作为"活代理"，
-    因此完全不依赖真实环境、也绝不会改动使用者真实的代理设置。
-- **`tools/Build-Release.ps1`**：打包出可发布的 zip。
-
-### 安全设计
-
-- 端口探活判定「活/死」，不对正在工作的代理做任何修改。
-- 地址解析不出主机和端口时（例如企业代理写成 `proxy.corp.local`）**只告警不自动清理**。
-- 默认**不修改**用户的「自动检测设置」，避免每次开机来回改动。
-- 只清理指向 `127.0.0.1` / `localhost` 的**本地失效 PAC**，远程 PAC 一律保留。
-- 不修改路由表：`-FixMetric` 仅在「优先默认路由落在虚拟网卡上」且「此刻确实连不上外网」时才动手。
-- `-FixDns` 判定保守：只处理回环或私有网段且完全不可达的 DNS，且仅限 DHCP 网卡；公网 DNS 永不自动改动。
-- 全程不联网、不下载、不收集任何信息。
-
-### 已验证
-
-详见 [README 的「验证记录」](README.md#十一验证记录) 一节。
+- `Reset-Proxy.ps1`：核心脚本。先做九项体检（用户级代理、PAC、自动检测、计算机级代理、
+  WinHTTP 代理、网卡 DNS、默认路由和虚拟网卡、hosts、当前权限），再把指向死端口的系统代理
+  恢复成直连。
+- 清理前先对代理端口做一次 TCP 连接：连得上就说明客户端在正常运行，直接退出什么都不改。
+- 改完会调 WinINET 的 `InternetSetOption` 通知系统，不用重启。
+- 同时修复「局域网设置」对话框背后的二进制数据 `Connections\DefaultConnectionSettings`，
+  只改标志位和计数器，其余字节原样保留。
+- 每次修改前把原设置备份到 `logs\backup\`，保留最近 20 份。
+- 可选修复项，默认关闭：`-IncludeWinHttp`、`-FixDns`、`-FixMetric`、`-FixHosts`、`-RepairAll`。
+- `Watch-Proxy.ps1`：可选常驻监视，每 N 分钟检查一次，客户端中途崩了也能自动恢复。
+- `Install-ProxyGuard.ps1`：安装器。部署脚本到 `%LOCALAPPDATA%\ProxyGuard`，写入时强制加
+  UTF-8 BOM 并回读确认；优先注册计划任务（注册后回读校验，避免把失败当成成功），不行就
+  自动退回启动文件夹。
+- 三个双击即用的启动器：`安装.cmd`、`卸载.cmd`、`一键体检.cmd`。内容是纯 ASCII，运行前会
+  先把同目录的 `.ps1` 修成 UTF-8 BOM，防止复制粘贴转存把编码弄坏。
+- 自带测试，不依赖 Pester。行为测试跑在临时注册表项上，自己开一个监听端口当"活代理"，
+  所以在任何机器上结果都一样，也不会碰使用者真实的设置。
+- GitHub Actions：推送时跑编码规范 + 语法 + 行为测试，推 `v*` 标签时自动打包发 Release。

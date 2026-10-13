@@ -100,7 +100,7 @@ foreach ($f in $ps1List) {
 
 Write-Host ''
 Write-Host '--- 4) 交付物完整性 ---' -ForegroundColor Cyan
-foreach ($name in @('安装.cmd', '卸载.cmd', '一键体检.cmd', 'Reset-Proxy.ps1', 'Watch-Proxy.ps1', 'Install-ProxyGuard.ps1', 'README.md', 'LICENSE')) {
+foreach ($name in @('src\安装.cmd', 'src\卸载.cmd', 'src\一键体检.cmd', 'src\Reset-Proxy.ps1', 'src\Watch-Proxy.ps1', 'src\Install-ProxyGuard.ps1', 'README.md', 'LICENSE')) {
     $p = Join-Path $RepoRoot $name
     Write-Result ('存在  {0}' -f $name) (Test-Path -LiteralPath $p) '缺少文件会让"下载即用"和开源仓库不完整'
 }

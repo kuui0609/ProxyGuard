@@ -37,9 +37,12 @@
 
 ### A：下载即用
 
-1. 点本页面右上角 **`Code`** → **`Download ZIP`**，解压到任意位置（例如 `D:\Tools\ProxyGuard`）；
+1. 到 [Releases](https://github.com/kuui0609/ProxyGuard/releases) 下载 `ProxyGuard-1.0.0.zip`，
+   这个包是扁平的，解压到任意位置即可（例如 `D:\Tools\ProxyGuard`）；
 2. 双击 **`安装.cmd`**（**不需要管理员权限**）；
 3. 看到 `安装完成` 就好了。**下次开机登录后约 20 秒自动生效。**
+
+> 如果你是点右上角 `Code` → `Download ZIP` 下载的源码，运行文件都在 `src` 文件夹里。
 
 ### B：git 克隆
 
@@ -48,10 +51,10 @@ git clone https://github.com/kuui0609/ProxyGuard.git
 cd ProxyGuard
 ```
 
-然后双击 `安装.cmd`，或：
+然后双击 `src\安装.cmd`，或：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-ProxyGuard.ps1 -DesktopShortcut
+powershell -NoProfile -ExecutionPolicy Bypass -File .\src\Install-ProxyGuard.ps1 -DesktopShortcut
 ```
 
 ## 五、功能介绍

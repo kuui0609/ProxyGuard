@@ -40,12 +40,12 @@ $payload = @(
     'README.md',
     'README.en.md',
     'CHANGELOG.md',
-    'Reset-Proxy.ps1',
-    'Watch-Proxy.ps1',
-    'Install-ProxyGuard.ps1',
-    '安装.cmd',
-    '卸载.cmd',
-    '一键体检.cmd'
+    'src/Reset-Proxy.ps1',
+    'src/Watch-Proxy.ps1',
+    'src/Install-ProxyGuard.ps1',
+    'src/安装.cmd',
+    'src/卸载.cmd',
+    'src/一键体检.cmd'
 )
 
 Write-Host ''
@@ -72,8 +72,9 @@ New-Item -ItemType Directory -Path $staging -Force | Out-Null
 
 try {
     foreach ($name in $payload) {
-        Copy-Item -LiteralPath (Join-Path $RepoRoot $name) -Destination (Join-Path $staging $name) -Force
-        Write-Host ('  + {0}' -f $name)
+        # 仓库里运行文件在 src/ 下，但发布包里要平铺到根，用户解压就能双击
+        Copy-Item -LiteralPath (Join-Path $RepoRoot $name) -Destination (Join-Path $staging (Split-Path $name -Leaf)) -Force
+        Write-Host ('  + {0}' -f (Split-Path $name -Leaf))
     }
 
     Compress-Archive -Path (Join-Path $staging '*') -DestinationPath $zipPath -CompressionLevel Optimal -Force

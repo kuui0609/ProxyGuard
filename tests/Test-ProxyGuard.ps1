@@ -29,7 +29,7 @@ param(
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-if (-not $GuardPath) { $GuardPath = Join-Path $RepoRoot 'Reset-Proxy.ps1' }
+if (-not $GuardPath) { $GuardPath = Join-Path $RepoRoot 'src\Reset-Proxy.ps1' }
 
 if (-not (Test-Path -LiteralPath $GuardPath)) { throw "找不到被测脚本: $GuardPath" }
 

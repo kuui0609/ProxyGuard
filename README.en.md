@@ -1,9 +1,9 @@
 # ProxyGuard
 
-**Fixes the "used a VPN/proxy client, shut down, and now half my apps have no internet" problem — automatically.**
+**No more opening Control Panel after every reboot just to get your internet back.**
 
-On every logon, ProxyGuard checks the Windows system proxy. If it points at a **dead local port**
-left behind by a client that was killed during shutdown, it restores direct access. No manual work.
+At logon it checks the Windows system proxy. If your proxy client left one behind before shutdown,
+it switches back to a direct connection.
 
 [![CI](https://github.com/kuui0609/ProxyGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/kuui0609/ProxyGuard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -11,178 +11,265 @@ left behind by a client that was killed during shutdown, it restores direct acce
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)](README.en.md)
 [![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](README.en.md)
 
-**English** | [简体中文](README.md)
+[简体中文](README.md) | **English**
 
 ---
 
-## 1. Do you have this problem?
+## 1. The problem
 
-- You ran an accelerator / proxy client / VPN, then **shut the machine down**;
-- On the next boot, **your browser, Steam, the Microsoft Store and launchers have no internet**,
-  while QQ / WeChat still work;
-- In *Control Panel → Internet Options → Connections → LAN settings*, the
-  **"Use a proxy server for your LAN"** box is still ticked and points at something like
-  `127.0.0.1:26561` or `127.0.0.1:7897` — where **nothing is listening**;
-- Clearing that tick (or ticking "Automatically detect settings") and clicking OK **fixes it instantly**;
+- You run an accelerator or proxy client, then shut the machine down.
+- On the next boot, **browsers, Steam, the Microsoft Store and similar apps have no internet**.
+- You open Control Panel → Network and Internet → Internet Options → Connections → LAN settings
+  and the proxy box is still ticked, pointing at something like `127.0.0.1:26561`.
+- You untick it (or tick "Automatically detect settings"), click OK, and the internet comes back.
 - You have to do this every single time.
 
-## 2. Why it happens (30 seconds)
+## 2. Why it happens
 
-These clients set the **system proxy** to `http://127.0.0.1:<port>` so that traffic goes through them.
+These clients work by pointing the system proxy at a port they listen on locally, so traffic goes
+through them first. On a clean exit they restore the previous setting. But when you shut down,
+Windows kills the process before it gets the chance — so the leftover proxy is still in effect after
+the next boot, and Windows keeps sending traffic to a port where nothing is listening.
 
-- On a clean exit they restore the previous value;
-- **but during shutdown the process is killed by Windows and never gets the chance**;
-- so the "proxy pointing at a dead port" is persisted and takes effect again on the next boot;
-- Windows sends all proxy-aware traffic to a port nobody is listening on → no internet.
-
-> Your manual fix (unticking the proxy) is exactly the same thing ProxyGuard does automatically.
-
-## 3. Why not "clean up at shutdown"?
-
-Because it cannot be relied on. Windows 10/11 enables **Fast Startup** by default:
-"shutdown" is really hibernate + resume, so shutdown scripts and shutdown scheduled tasks
-**frequently never run**. Hard power-offs, crashes and "End task" obviously do not run them either.
-The client's own "restore proxy on exit" fails for the same reason.
-
-**So the repair belongs right after logon** — that is the one moment guaranteed to happen.
-
-## 4. Emergency fix
+## 3. No internet right now?
 
 | Situation | What to do |
 | --- | --- |
-| No internet, suspect a leftover proxy | Double-click the **`修复上网`** (`Fix internet`) shortcut |
-| Want to know what is actually wrong | Double-click **`一键体检.cmd`** (`Health check`) — read-only, changes nothing |
+| No internet | Double-click the **`修复上网`** (Fix internet) shortcut on the desktop |
+| Want to know what's actually wrong | Double-click **`一键体检.cmd`** (Health check) — read-only, changes nothing |
 | Command line | `powershell -NoProfile -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\ProxyGuard\Reset-Proxy.ps1" -Force` |
-| See what it did on each boot | `%LOCALAPPDATA%\ProxyGuard\logs\proxyguard.log` |
+| What it did after booting | `%LOCALAPPDATA%\ProxyGuard\logs\proxyguard.log` |
 
-## 5. Quick start
+## 4. Download
 
-1. Click **`Code` → `Download ZIP`** and extract anywhere (e.g. `D:\Tools\ProxyGuard`);
-2. Double-click **`安装.cmd`** (`Install`) — **no administrator rights required**;
-3. Done. **It takes effect automatically ~20 seconds after your next logon.**
+### A. Download and run
 
-Or, with git:
+1. Grab `ProxyGuard-1.0.0.zip` from [Releases](https://github.com/kuui0609/ProxyGuard/releases).
+   That archive is flat, so just extract it anywhere (e.g. `D:\Tools\ProxyGuard`).
+2. Double-click **`安装.cmd`** (Install). **No administrator rights needed.**
+3. That's it. **It takes effect about 20 seconds after your next logon.**
+
+> If you downloaded the source via `Code` → `Download ZIP`, the runnable files live in the `src` folder.
+
+### B. git clone
 
 ```bash
 git clone https://github.com/kuui0609/ProxyGuard.git
 cd ProxyGuard
 ```
 
+Then double-click `src\安装.cmd`, or:
+
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-ProxyGuard.ps1 -DesktopShortcut
+powershell -NoProfile -ExecutionPolicy Bypass -File .\src\Install-ProxyGuard.ps1 -DesktopShortcut
 ```
 
-To also auto-repair DNS / WinHTTP / hosts (those need admin), double-click
-`安装为计划任务(需管理员).cmd` and accept the single UAC prompt. It registers a logon
-scheduled task running with highest privileges.
+## 5. What it does
 
-> Note: the launcher file names are in Chinese because the primary audience is Chinese-speaking
-> users; their *contents* are plain ASCII, and the PowerShell scripts are UTF-8 with BOM, so they
-> run on any Windows locale.
-
-## 6. What it does / doesn't do
-
-**Does**
-
-| When | Action |
+| When | What it does |
 | --- | --- |
-| ~20 s after logon (configurable) | Probes whether anything listens on the port the system proxy points to |
-| Nothing listening (= dead proxy) | Restores direct access **and notifies Windows immediately** (WinINET refresh + LAN-settings blob sync + DNS cache flush) |
-| Something is listening (client running) | **Does nothing at all** — never disturbs a working VPN/proxy |
-| Watch mode (optional) | Re-checks every 5 minutes, so a mid-session client crash also self-heals |
+| ~20 seconds after logon (configurable) | Probes whether anything is listening on the port the system proxy points at |
+| Nothing is listening (= dead proxy) | Restores a direct connection and **notifies Windows immediately**: WinINET refresh + LAN-settings blob sync + DNS cache flush |
+| Something *is* listening (client running normally) | Leaves your running accelerator/VPN alone |
+| Watch mode (optional at install) | Checks every 5 minutes, so a mid-session crash also self-heals |
 | Before every change | Backs up the previous settings to `logs\backup\*.json` (keeps the last 20) |
 
-**Does not**
+What it will **not** do:
 
-- never touches a working proxy (that is what the liveness probe is for);
-- never changes your "Automatically detect settings" preference unless you pass `-AutoDetect` / `-NoAutoDetect`;
-- never removes remote PAC URLs (only dead *localhost* PACs);
-- never modifies the routing table (it only reports — see the limitations in `README.md`);
-- never talks to the network, never downloads, never collects anything.
+- it never touches a proxy that is working normally;
+- it does not change your "Automatically detect settings" preference;
+- it does not delete remote PAC URLs — only dead *localhost* PACs are cleaned up;
+- it does not modify the routing table.
 
-## 7. Health report (read-only)
+## 6. FAQ
 
-`一键体检.cmd` prints 9 findings and changes nothing:
+**Q: Nothing new in the log after booting?**
+The startup entry got blocked. Whitelist `ProxyGuard.cmd`, or switch to the scheduled-task install
+(run `安装为计划任务(需管理员).cmd`).
 
-```
-================ 网络残留体检 ================
-[1] 系统代理(当前用户) : 已开启 -> 127.0.0.1:26561   [端口无人监听 → 死代理，就是它导致上不了网]
-[2] 自动配置脚本(PAC)  : 未设置   [正常]
-[3] 自动检测设置       : 未勾选
-[4] 系统代理(计算机级) : 未设置   [正常]
-[5] WinHTTP 代理       : 未设置（直连）   [正常]
-[6] 网卡 DNS           : WLAN -> 172.20.10.1   [可用]
-[7] 默认路由           : WLAN 网关 172.20.10.1 有效跃点 30   [当前优先]
-[8] hosts 文件         : 正常（无指向本机的条目）
-[9] 管理员权限         : 否
-==============================================
-```
+**Q: The log keeps saying "skipped" but I still have no internet.**
+Use `修复上网` (with `-Force`) to force a direct connection.
 
-It covers: per-user proxy, PAC, auto-detect, machine-wide (Group Policy) proxy,
-WinHTTP proxy, adapter DNS, default routes / virtual adapters, hosts file, current privileges.
+**Q: Will it conflict with the accelerator I'm using?**
+No. If something is listening on the port, it doesn't touch anything.
 
-## 8. FAQ
+**Q: How do I uninstall?**
+Double-click `卸载.cmd`. It stops the watcher, removes the scheduled task, the startup entry, the
+desktop shortcut and the install folder. No resident process is left behind.
 
-**No new lines in the log after booting?**
-The startup entry was blocked. Security suites (360, Huorong, etc.) and "optimizer/cleaner" tools
-often disable startup entries. Whitelist `ProxyGuard.cmd`, or switch to the scheduled-task install.
+## 7. Options
 
-**My antivirus flags it?**
-"A startup entry that launches a hidden PowerShell" is genuinely a common malware pattern, so the
-warning is not unreasonable. Mitigations: every script is **plain-text `.ps1`** you can read; nothing
-ever touches the network; whitelist the install folder; or skip autostart entirely and just keep the
-desktop shortcut for manual one-click repair.
+### `Reset-Proxy.ps1`
 
-**My client uses a different port — do I need to configure anything?**
-No. The script reads whatever the system proxy currently points to.
+| Option | What it does |
+| --- | --- |
+| `-DryRun` | report only, change nothing (same as `一键体检.cmd`) |
+| `-Force` | skip the liveness check, go direct no matter what (for emergencies) |
+| `-Delay <sec>` | wait N seconds before checking (used at logon; default 20) |
+| `-ProxyPort <port>` | probe this port instead of parsing the proxy address |
+| `-AutoDetect` / `-NoAutoDetect` | force the "Automatically detect settings" checkbox on/off (left alone by default) |
+| `-KeepAutoConfigURL` | keep the PAC URL (by default only dead localhost PACs are removed) |
+| `-IncludeWinHttp` | also reset the WinHTTP proxy (needs admin) |
+| `-FixDns` | also repair a suspected dead DNS setting (needs admin, very conservative) |
+| `-FixMetric` | also handle a virtual adapter stealing the default route (needs admin, probes first) |
+| `-FixHosts` | also comment out hosts entries pointing at `127.0.0.1` (needs admin, reversible) |
+| `-RepairAll` | same as `-IncludeWinHttp -FixDns -FixMetric -FixHosts` |
+| `-Quiet` | no console output, and no log entries when nothing happened |
 
-**The log always says "skipped" but I still have no internet?**
-The port *is* being listened on, but that program is not working (tunnel down, subscription expired,
-kill switch engaged). Use `修复上网` (`-Force`) to force direct access.
+### `Install-ProxyGuard.ps1`
 
-## 9. How it works
+| Option | What it does |
+| --- | --- |
+| `-Delay <sec>` | logon delay, default 20 |
+| `-Watch` / `-WatchIntervalMinutes <n>` | background watcher (default interval 5 minutes) |
+| `-AutoDetect` / `-IncludeWinHttp` / `-RepairAll` | passed through to the guard script |
+| `-AtShutdown` | also register a shutdown task (best effort — Fast Startup often skips it) |
+| `-DesktopShortcut` | create a desktop shortcut |
+| `-UseTask` | scheduled task only, running with highest privileges (needs admin) |
+| `-InstallDir <path>` | install to a different folder |
+| `-Uninstall` | remove everything |
 
-The LAN settings dialog maps to
+## 8. Implementation notes
+
+### 1. Which setting it changes
+
+「Internet Options → Connections → LAN settings」maps to the registry key
 `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`:
-`ProxyEnable`, `ProxyServer`, `AutoConfigURL` (PAC), `AutoDetect` (WPAD).
-There is also a hidden binary value `Connections\DefaultConnectionSettings` that backs the dialog —
-it must be updated too, otherwise the checkboxes would show the wrong state.
 
-ProxyGuard only rewrites the flags field (offset 8: `DIRECT=1, PROXY=2, AUTO_PROXY_URL=4, AUTO_DETECT=8`)
-and increments the change counter (offset 4); **every other byte is preserved verbatim** — the test
-suite asserts exactly that.
+| Registry value | Dialog control | Notes |
+| --- | --- | --- |
+| `ProxyEnable` | Use a proxy server for your LAN | `1` = enabled |
+| `ProxyServer` | Address / Port | clients write `127.0.0.1:7897`, `http://127.0.0.1:7897`, and `http=...;https=...` |
+| `AutoConfigURL` | Use automatic configuration script | PAC address |
+| `AutoDetect` | Automatically detect settings | WPAD |
 
-After writing, it calls WinINET `InternetSetOption(INTERNET_OPTION_SETTINGS_CHANGED)` +
-`(INTERNET_OPTION_REFRESH)` so running applications pick up the change without a reboot.
+There is also a hidden binary value, `Connections\DefaultConnectionSettings`, which is what the
+dialog actually reads. It has to be updated as well, otherwise the checkboxes in the Control Panel
+still show the old state. Its layout:
 
-The safety design: a TCP connect to the configured `host:port` decides dead vs. alive;
-an address that cannot be parsed (e.g. `proxy.corp.local`) is only reported, never acted on.
+```
+offset 0  : version (0x46)
+offset 4  : change counter (incremented on every write)
+offset 8  : flags  DIRECT=1, PROXY=2, AUTO_PROXY_URL=4, AUTO_DETECT=8
+offset 12 : proxy string, bypass list, PAC string ...
+```
 
-## 10. Development
+ProxyGuard rewrites **the flags at offset 8** and increments **the counter at offset 4**; every other
+byte is preserved verbatim (the test suite asserts exactly that).
 
-No dependencies — deliberately no Pester, no modules, nothing to install:
+### 2. Why it has to "notify" Windows
+
+Writing the registry alone is not enough — many running applications don't re-read the settings
+immediately. So after a change it calls WinINET's
+`InternetSetOption(INTERNET_OPTION_SETTINGS_CHANGED)` + `(INTERNET_OPTION_REFRESH)` and flushes the
+DNS cache, which means browsers recover **without rebooting**.
+
+### 3. The liveness check (the most important safety design in this tool)
+
+Before cleaning anything, it opens a TCP connection to the `host:port` in `ProxyServer`:
+
+- connects → the client is running normally, **exit, change nothing**;
+- doesn't connect → dead proxy, restore a direct connection;
+- can't parse a host and port out of it (corporate proxies are sometimes written as
+  `proxy.corp.local`) → **warn only, don't touch it**.
+
+### 4. Why the scripts must be saved as UTF-8 with BOM
+
+When Windows PowerShell 5.1 reads a UTF-8 file **without a BOM**, it decodes it using the system ANSI
+code page (GBK on Simplified Chinese systems). Non-ASCII text turns into mojibake and **the file
+fails to parse** — the script simply doesn't run, and it fails silently.
+
+That's why the project has three hard conventions (CI checks the first two):
+
+1. `.ps1` must be **UTF-8 with BOM** (`.editorconfig` is already set up for this);
+2. `.cmd` / `.bat` contents must be **plain ASCII** (Chinese file names are fine — they're friendlier
+   to double-click);
+3. everything must stay compatible with **Windows PowerShell 5.1**: no `?:`, no `??`, no `-Parallel`.
+
+> This was the biggest pitfall in this project: everything worked locally under PowerShell 7, and
+> then on a user's machine (5.1) the whole script failed to parse because of the encoding. Now CI and
+> the built-in tests keep an eye on it, so it won't happen again.
+
+## 9. Verification
+
+Verified on Windows 11 (Simplified Chinese, Windows PowerShell 5.1.26100):
+
+| Check | Result |
+| --- | --- |
+| Syntax parsing of all three `.ps1` files (5.1) | Pass (it fails without a BOM, which is why deployment forces one and reads it back) |
+| `127.0.0.1:26561` dead port | Cleaned correctly: `ProxyEnable 1→0`, flags `0x0B→0x01`, counter +1, **zero other byte differences** |
+| `http://127.0.0.1:26561` with the **port alive** | Correctly **SKIPPED** (regression case: an early version misjudged it as dead and would have disabled a working proxy) |
+| `http://` dead port / `http=...;https=...` | Cleaned correctly |
+| Working manual proxy + dead local PAC | Only the dead PAC is removed, the proxy is **kept**, flags correctly `0x0F→0x0B` |
+| Unparseable address (`proxy.corp.local`) | Warns only, doesn't touch it |
+| `-DryRun` | Changes not a single byte |
+| "Automatically detect settings" under default behaviour | Left exactly as the user had it (case: still ticked after cleanup, flags `0x09`) |
+| Watch loop | Multiple rounds fine; cleans a dead proxy and logs it; exits on the stop file |
+| Unattended mode (`-Quiet`) | No log noise when nothing happens; WARN / ERROR **always** get written |
+| Whole flow | The live proxy settings were **never modified** (every case runs against a shadow registry key, checked item by item) |
+| Extracting and running from a path with Chinese characters and spaces | Works |
+| Running after deliberately removing the BOM | Fails to parse directly; the automatic repair in `安装.cmd` / `一键体检.cmd` fixes it and it runs |
+
+Most of these cases are now frozen into `tests\Test-ProxyGuard.ps1` and re-run in CI on every commit.
+
+## 10. Known limitations
+
+- **Kill switches are not handled.** Some VPN clients block all traffic while disconnected. That's
+  their own policy and can only be turned off inside the client. The health report hints at this by
+  telling you when the preferred default route is on a virtual adapter.
+- **The routing table is not changed.** `-FixMetric` only acts when the preferred default route is on
+  a virtual adapter *and* the internet really is unreachable at that moment; otherwise it only
+  reports. Breaking routes is much easier than breaking a proxy setting.
+- **`-FixDns` is very conservative.** It only handles DNS servers that are loopback addresses with
+  nothing listening on port 53 locally, or private-range addresses that are completely unreachable —
+  and only on adapters set to obtain DNS automatically. Public DNS servers (like `8.8.8.8`) and any
+  static DNS you configured yourself are never touched.
+- **Driver-level interception is out of scope.** A few clients hook traffic via LSP/WFP. That isn't
+  the system proxy, so none of this applies.
+- **Windows only** (Windows 10 / 11; Windows 8.1 and later should work in theory but haven't been
+  tested).
+
+## 11. Development
+
+**Nothing to install.** The project deliberately avoids Pester and every third-party module, so that
+"download and run" stays true.
 
 ```powershell
+# Convention check: encodings, BOM, ASCII-only .cmd files, syntax
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Conventions.ps1
+
+# Behaviour test: the full decision matrix on a shadow registry key (never touches your real settings)
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-ProxyGuard.ps1
+
+# Build a release zip
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Build-Release.ps1 -Version 1.0.0
 ```
 
-Both test scripts exit with `0` on success and with the number of failures otherwise.
-`Test-ProxyGuard.ps1` works on a **shadow registry key** and spins up its own listening socket to
-impersonate a live proxy, so it is fully hermetic and never touches your real settings.
+Both test scripts report through their **exit code**: `0` = all passed, otherwise the number of
+failures.
 
-Three hard conventions (checked by CI) because Windows PowerShell 5.1 decodes BOM-less UTF-8 as ANSI,
-which silently breaks script parsing: `.ps1` must be UTF-8 **with BOM**, `.cmd` must be ASCII-only,
-and all code must run on **Windows PowerShell 5.1**.
+`Test-ProxyGuard.ps1`:
 
-## 11. License
+- creates a temporary key under `HKCU\Software\ProxyGuardTest` and deletes it afterwards;
+- opens its own local TCP listener to play the part of a "live proxy", so results are reproducible on
+  any machine and in any CI environment.
 
-[MIT](LICENSE) — free to use, modify and redistribute; just keep the copyright notice.
+Code conventions, project layout and commit style are in [CONTRIBUTING.md](CONTRIBUTING.md).
+Version history is in [CHANGELOG.md](CHANGELOG.md).
 
-## Disclaimer
+## 12. Contributing and license
 
-This tool modifies Windows **system proxy settings** (plus the DNS/hosts/WinHTTP repairs you
-explicitly opt into). Every change is backed up first and only demonstrably-dead proxies are touched
-by default, but any system-level change carries risk. Use at your own judgement; the author is not
-liable for any consequences. The tool contains **no networking code** and collects nothing.
+- Issues and PRs are welcome. When reporting a bug, please include the output of `一键体检.cmd` —
+  see [CONTRIBUTING.md](CONTRIBUTING.md).
+- Licensed under the [MIT license](LICENSE): free to use, modify and redistribute, as long as you
+  keep the copyright notice.
+
+### Disclaimer
+
+This tool modifies Windows **system proxy settings** (plus the DNS / hosts / WinHTTP repairs you
+explicitly opt into). Every change is backed up first and by default only proxies that are
+demonstrably dead are touched, but changing system settings always carries some risk. Judge for
+yourself; the author is not liable for any consequences of using it.
+
+The tool contains **no networking code at all**: it never uploads, downloads or collects anything,
+and you can read every line yourself.
