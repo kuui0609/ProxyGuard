@@ -1,0 +1,30 @@
+# 统一编辑器行为，避免"编码不对导致脚本跑不起来"这类问题
+# https://editorconfig.org
+
+root = true
+
+[*]
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# ★ 关键约定 ★
+# PowerShell 脚本必须保存为 UTF-8 with BOM。
+# Windows PowerShell 5.1 读取「无 BOM 的 UTF-8」时会按系统 ANSI 代码页解码，
+# 中文会变成乱码并直接导致语法解析失败（脚本根本跑不起来）。
+[*.ps1]
+charset = utf-8-bom
+
+# cmd/bat 启动器必须保持「纯 ASCII 内容」，任何语言和代码页的 Windows 都不会乱码。
+# EditorConfig 无法表达"必须 ASCII"，所以靠 CI 检查（tests/Test-Conventions.ps1）。
+[*.{cmd,bat}]
+charset = utf-8
+
+[*.{md,yml,yaml,json}]
+end_of_line = lf
+trim_trailing_whitespace = false
+
+[*.{psd1,psm1}]
+charset = utf-8-bom

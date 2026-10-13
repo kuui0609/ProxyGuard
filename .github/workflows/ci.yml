@@ -1,0 +1,53 @@
+name: CI
+
+# 每次 push / PR 都跑：规范检查 + 行为测试 + 冒烟测试
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: 测试 (Windows PowerShell 5.1)
+    runs-on: windows-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 让运行器把中文按 UTF-8 输出，否则日志里会是一堆乱码
+      - name: 规范检查（.ps1 必须有 BOM / .cmd 必须纯 ASCII / 语法解析）
+        shell: powershell
+        run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          .\tests\Test-Conventions.ps1
+
+      - name: 行为测试（影子注册表项，不会碰真实设置）
+        shell: powershell
+        run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          .\tests\Test-ProxyGuard.ps1
+
+      - name: 冒烟测试 - 体检模式（只读，不做任何修改）
+        shell: powershell
+        run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          .\Reset-Proxy.ps1 -DryRun
+
+      - name: 冒烟测试 - 打包脚本
+        shell: powershell
+        run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          .\tools\Build-Release.ps1 -Version 0.0.0-ci
+
+      - name: 上传测试产物（打包出的 zip，方便人工检查）
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProxyGuard-ci-zip
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 7

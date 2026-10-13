@@ -1,0 +1,48 @@
+name: Release
+
+# 推送形如 v1.0.0 的标签时自动：
+#   1. 打包出 ProxyGuard-<版本>.zip
+#   2. 创建 GitHub Release 并把 zip 作为附件上传
+#   3. 用 commit 自动生成 Release Notes
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 打包并发布
+    runs-on: windows-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 打包
+        shell: powershell
+        run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          .\tools\Build-Release.ps1 -Version ${{ github.ref_name }}
+
+      - name: 校验产物
+        shell: powershell
+        run: |
+          $zip = Get-ChildItem dist\*.zip
+          if (-not $zip) { throw '没有生成 zip' }
+          Write-Host ("产物: {0} ({1:N0} 字节)" -f $zip.Name, $zip.Length)
+
+      - name: 创建 Release 并上传 zip
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $zip = (Get-ChildItem dist/*.zip | Select-Object -First 1).FullName
+          gh release create $tag $zip --title $tag --generate-notes
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Release 可能已存在，改为上传/覆盖附件"
+            gh release upload $tag $zip --clobber
+          }

@@ -1,0 +1,42 @@
+name: 💡 功能建议
+description: 希望它支持别的客户端 / 别的场景
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        欢迎提建议！请先看一眼 README 里的「已知边界」一节，
+        有些场景（比如 VPN 客户端自带的网络锁、驱动级流量劫持）是这个工具**有意不去碰**的。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你遇到的实际场景
+      description: 先描述问题，而不是直接描述方案
+      placeholder: 例如：我用 XXX 客户端，它会把网卡 DNS 改掉，重启后虽然能上网但解析很慢……
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你希望它怎么做
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 相关环境信息
+      description: 客户端名称版本、Windows 版本等
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: 安全前提确认
+      options:
+        - label: 我理解这个项目要求「任何会改系统设置的功能都必须有智能判定、只报告不修改的默认行为、以及显式开关」
+          required: true

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 先看 README 的常见问题
+    url: https://github.com/kuui0609/ProxyGuard#七常见问题
+    about: 断网急救、杀软误报、日志在哪、为什么不做关机清理 —— 大部分疑问这里都有答案
+  - name: 🔍 先跑一次体检
+    url: https://github.com/kuui0609/ProxyGuard#四断网了怎么办急救
+    about: 双击 一键体检.cmd 会输出 9 项结论，提 issue 时附上它定位速度会快很多

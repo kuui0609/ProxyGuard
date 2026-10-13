@@ -1,0 +1,92 @@
+name: 🐛 报告问题
+description: 工具没有解决你的问题，或者误改了你的设置
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！
+
+        这类工具的问题几乎都和**具体环境**有关，所以请尽量把下面的信息填完整。
+        其中「体检报告」是最关键的一项，没有它基本没法定位问题。
+        **体检只检查、不修改**，可以放心运行。
+
+  - type: textarea
+    id: health-report
+    attributes:
+      label: 体检报告
+      description: 双击 `一键体检.cmd`，把输出的全部内容粘贴到这里
+      render: text
+      placeholder: |
+        ================ 网络残留体检 ================
+        [1] 系统代理(当前用户) : ...
+        ...
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows 版本
+      description: 按 Win+R 输入 winver 可以查看
+      placeholder: 例如 Windows 11 24H2 (26100.1234)
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: 加速器 / 代理 / VPN 客户端
+      description: 名称和版本号
+      placeholder: 例如 Watt Toolkit 3.0.0-rc.5 / Clash Verge Rev 2.0.3
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 做了什么操作之后出现的问题
+      placeholder: |
+        1. 打开 XXX 加速器，开启加速
+        2. 直接关机
+        3. 开机后发现浏览器打不开网页
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望的结果
+      description: 你认为应该发生什么
+    validations:
+      required: false
+
+  - type: textarea
+    id: log
+    attributes:
+      label: 日志（可选，但很有帮助）
+      description: 内容在 %LOCALAPPDATA%\ProxyGuard\logs\proxyguard.log
+      render: text
+    validations:
+      required: false
+
+  - type: dropdown
+    id: admin
+    attributes:
+      label: 是否以管理员身份安装过？
+      options:
+        - 没有（用的是 安装.cmd）
+        - 有（用的是 安装为计划任务(需管理员).cmd）
+        - 不确定
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我已经看过 README 的「常见问题」，确认这不是已知的边界情况（例如网络锁 / kill switch、驱动级劫持）
+          required: true
