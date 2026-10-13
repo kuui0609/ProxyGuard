@@ -1,8 +1,8 @@
 # ProxyGuard · 代理守护
 
-**让"用完加速器/VPN 直接关机 → 下次开机上不了网"这件事全自动解决。**
+**解决使用代理直接关机,再次重启后需要打开控制面板才能恢复网络的繁琐步骤**
 
-开机登录后自动检查系统代理，发现客户端被强制关机留下的**死代理**就恢复直连，全程不用你动手。
+开机登录后自动检查系统代理，发现客户端被关机前留下的**代理**就恢复直连.
 
 [![CI](https://github.com/kuui0609/ProxyGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/kuui0609/ProxyGuard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
