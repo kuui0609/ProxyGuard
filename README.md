@@ -42,11 +42,10 @@
 
 | 场景 | 操作 |
 | --- | --- |
-| 突然上不了网 | 双击桌面上的 **`修复上网`** |
-| 想知道是哪出问题 | 双击 **`一键体检.cmd`**（只检查、**不做任何修改**） |
+| 无法上网 | 双击桌面上的 **`修复上网`** |
+| 问题原由 | 双击 **`一键体检.cmd`**（只检查、**不做任何修改**） |
 | 命令行急救 | `powershell -NoProfile -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\ProxyGuard\Reset-Proxy.ps1" -Force` |
-| 看它每次开机做了什么 | `%LOCALAPPDATA%\ProxyGuard\logs\proxyguard.log` |
-PS:主要是每次打开控制面板再勾很麻烦.....
+| 开机后运行的日志 | `%LOCALAPPDATA%\ProxyGuard\logs\proxyguard.log` |
 ## 五、快速开始
 
 ### 方式 A：下载即用（推荐，不需要 git）
