@@ -30,15 +30,8 @@
 - 于是这个"指向死端口的代理"被原样保存下来，下次开机继续生效；
 - 系统把流量发给一个**没有任何程序在监听**的端口 → 没网。
 
-## 三、为什么不做"关机时自动清理"？
 
-不够可靠。Win10/Win11 默认开启**快速启动**，关机其实是"休眠 + 下次恢复"，
-关机脚本、关机计划任务**经常根本不执行**；强制关机、断电、蓝屏、任务管理器结束进程更不用说。
-客户端自带的"退出时还原代理"也是因为同样的原因失效的。
-
-**所以修复点放在开机登录之后** —— 那是 100% 会发生的时机。本项目就干这一件事。
-
-## 四、断网情况下
+## 三、断网情况下
 
 | 场景 | 操作 |
 | --- | --- |
@@ -46,7 +39,7 @@
 | 问题原由 | 双击 **`一键体检.cmd`**（只检查、**不做任何修改**） |
 | 命令行急救 | `powershell -NoProfile -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\ProxyGuard\Reset-Proxy.ps1" -Force` |
 | 开机后运行的日志 | `%LOCALAPPDATA%\ProxyGuard\logs\proxyguard.log` |
-## 五、快速开始
+## 四、快速开始
 
 ### 方式 A：下载即用（推荐，不需要 git）
 
@@ -67,7 +60,7 @@ cd ProxyGuard
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-ProxyGuard.ps1 -DesktopShortcut
 ```
 
-## 六、实际应用状况
+## 五、实际应用状况
 
 **可以做的...**
 
@@ -87,7 +80,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-ProxyGuard.ps1 -De
 - 不会改路由表（只体检报告，理由见[第十二节](#十二已知边界)）；
 - 不会联网、不会下载任何东西、不收集任何信息。
 
-## 七、常见问题
+## 六、常见问题
 
 **Q：开机后日志里没有新记录？**
 说明开机自启被拦了。安全软件（360、火绒、电脑管家等）或"优化 / 清理"类工具常会禁用启动项。
@@ -106,7 +99,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-ProxyGuard.ps1 -De
 **Q：卸载**
 双击 `卸载.cmd`：结束常驻监视进程、删除计划任务、启动项、桌面快捷方式和安装目录，不留常驻进程。
 
-## 八、体检报告界面
+## 七、体检报告界面
 
 `一键体检.cmd` 会输出 9 项结论，且**不做任何修改**：
 
@@ -130,7 +123,7 @@ WinHTTP 代理、网卡 DNS、默认路由 / 虚拟网卡、hosts 文件、当�
 
 > 提 issue 时把这份报告贴上来，定位速度会快很多。
 
-## 九、参数说明
+## 八、参数说明
 
 ### `Reset-Proxy.ps1`
 
@@ -162,7 +155,7 @@ WinHTTP 代理、网卡 DNS、默认路由 / 虚拟网卡、hosts 文件、当�
 | `-InstallDir <路径>` | 自定义安装目录 |
 | `-Uninstall` | 卸载 |
 
-## 十、原理与实现细节
+## 九、原理与实现细节
 
 ### 1. 改的是哪个设置
 
@@ -217,7 +210,7 @@ Windows PowerShell 5.1 读取**没有 BOM** 的 UTF-8 文件时，会按系统 A
 > 这是这个项目踩过的最大的坑：本地用 PowerShell 7 测试一切正常，一到用户机器上（5.1）
 > 就因为编码问题整个脚本解析失败。现在有 CI + 自带测试守着，不会再有第二次。
 
-## 十一、验证记录
+## 十、验证记录
 
 在 Windows 11（简体中文，Windows PowerShell 5.1.26100）上验证：
 
@@ -239,7 +232,7 @@ Windows PowerShell 5.1 读取**没有 BOM** 的 UTF-8 文件时，会按系统 A
 
 以上大部分用例已经固化成 `tests\Test-ProxyGuard.ps1`，每次提交都会在 CI 里自动重跑。
 
-## 十二、已知边界
+## 十一、已知边界
 
 - **不处理"网络锁 / kill switch"**：有些 VPN 客户端有"未连接时阻断全部流量"的功能，
   那是它自己的策略，只能在客户端里关掉。体检报告会提示"默认路由落在虚拟网卡上"帮你定位。
@@ -275,7 +268,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Build-Release.ps1 -V
 代码约定、目录结构、提交规范请看 [CONTRIBUTING.md](CONTRIBUTING.md)。
 变更历史请看 [CHANGELOG.md](CHANGELOG.md)。
 
-## 十四、贡献与许可
+## 十二、贡献与许可
 
 - 欢迎提 issue 和 PR！报 bug 时请附上 `一键体检.cmd` 的输出，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 - 本项目使用 [MIT 许可证](LICENSE)，可以自由使用、修改、商用，只需保留版权声明。
